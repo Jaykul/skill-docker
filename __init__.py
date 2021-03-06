@@ -1,7 +1,7 @@
 from opsdroid.matchers import match_regex
 from voluptuous import Required
 from tempfile import TemporaryDirectory, NamedTemporaryFile
-import docker, asyncio, re, os
+import docker, asyncio, re, os, traceback, subprocess
 
 CONFIG_SCHEMA = {
     Required("containers", {
@@ -9,13 +9,13 @@ CONFIG_SCHEMA = {
             "names": ("pwsh","powershell"),
             "extension": ".ps1",
             "container": "mcr.microsoft.com/powershell",
-            "command": 'pwsh -NoLogo -NonInteractive -NoProfile -File {}'
+            "command": ['pwsh','-NoLogo','-NonInteractive','-NoProfile','-File']
         },
         "Python": {
             "names": ("python","py"),
             "extension": ".py",
             "container": "python",
-            "command": 'python {}'
+            "command": ['python']
         }
     }): dict
 }
@@ -41,25 +41,41 @@ async def run_this(opsdroid, config, message):
         return
 
     await message.respond(f"<p>Let me try that in <code>{container}</code></p>")
-    with TemporaryDirectory() as working:
-        codefile = NamedTemporaryFile(mode='w+t', suffix=language["extension"], dir=working, delete=False)
-        codefile.writelines(code)
-        codefile.close()
-        head, filename = os.path.split(codefile.name)
-        print("Container name: {}".format(container))
-        print("Working directory: {}".format(working))
-        print("File name: {}".format(codefile.name))
-        try:
-            result = CLIENT.containers.run(
-                container,
-                language["command"].format('/mnt/code/{}'.format(filename)),
-                auto_remove = True,
-                volumes = {working: { 'bind': '/mnt/code', 'mode':'ro'}})
-            result = result.decode("utf8")
-            result = re.compile(r'\\n').sub("<br/>\n",result)
-            await message.respond("<pre>{}</pre>".format(result))
-        except docker.errors.ContainerError:
-            await message.respond("An error occurred. Sorry, but there's no error logging yet.")
+    # This requires you to have a mounted /working volume
+    # with TemporaryDirectory(dir='/working') as temp:
+    codefile = NamedTemporaryFile(mode='w+t', suffix=language["extension"], dir='/working', delete=False)
+    codefile.writelines(code)
+    codefile.close()
+    head, filename = os.path.split(codefile.name)
+    print("Container name: {}".format(container))
+    # print("Working directory: {}".format(temp))
+    print("File name: {}".format(codefile.name))
+    print("Command: {} /code/{}".format(" ".join(language["command"]), filename))
+
+    try:
+        # This requires you to have "working" volume you can mount
+        process = subprocess.run(
+            ['docker', 'run', '-v', 'working:/code', container] + language["command"] + [f'/code/{filename}'],
+            capture_output=True,
+            encoding="UTF8")
+        # result = CLIENT.containers.run(
+        #     container,
+        #     #language["command"].format('/code/{}'.format(filename)),
+        #     "ls /code",
+        #     auto_remove = True,
+        #     volumes = {'working': { 'bind': '/code', 'mode':'ro'}}
+        #     )
+        # result = result.decode("utf8")
+        # result = re.compile(r'\\n').sub("<br/>\n",result)
+        if (process.returncode == 0):
+            await message.respond("<pre>{}</pre>".format(process.stdout))
+        else:
+            print("Command exited with {}".format(process.returncode))
+            print(process.stderr)
+
+    except docker.errors.ContainerError:
+        await message.respond("An error occurred. Sorry, but there's no error logging yet.")
+        traceback.print_exc()
 
 # class Message:
 
