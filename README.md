@@ -52,7 +52,7 @@ docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v working:/code op
     volume: working:/code
     path: /code
     containers:
-      - language: ["pwsh","powershell"]
+      - language: ["powershell","ps","ps1","pwsh"]
         extension: ".ps1"
         container: "mcr.microsoft.com/powershell"
         command: ['pwsh','-NoLogo','-NonInteractive','-NoProfile','-File']
@@ -77,3 +77,36 @@ The docker skill will write code to a file, mount that file in the specified con
 >     opsdroid: ```
 >               Jim
 >               ```
+
+### Get-Help Get-Command
+
+> user: Get-Help Get-Random
+>
+> opsdroid:
+>
+>     NAME
+>        Get-Random
+>
+>     SYNTAX
+>         Get-Random [[-Maximum] <Object>] [-SetSeed <int>] [-Minimum <Object>]
+>         [-Count <int>] [<CommonParameters>]
+>
+>         Get-Random [-InputObject] <Object[]> [-SetSeed <int>] [-Count <int>]
+>         [<CommonParameters>]
+>
+>         Get-Random [-InputObject] <Object[]> -Shuffle [-SetSeed <int>]
+>         [<CommonParameters>]
+>
+>
+>     ALIASES
+>         None
+>
+>
+>     REMARKS
+>         Get-Help cannot find the Help files for this cmdlet on this computer. It
+>         is displaying only partial help.
+>             -- To download and install Help files for the module that includes
+>         this cmdlet, use Update-Help.
+>             -- To view the Help topic for this cmdlet online, type: "Get-Help
+>         Get-Random -Online" or
+>                go to https://go.microsoft.com/fwlink/?LinkID=2097016.
