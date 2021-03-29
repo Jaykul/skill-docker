@@ -93,14 +93,13 @@ class Docker(Skill):
         volume, workdir = config["volume"].split(":")
         filename = "{}/{}".format(workdir, os.path.split(codefile.name)[1])
         await self.invoke_docker(message.respond, language["container"], config["volume"], language["command"], filename)
-        await message.respond(f"Finished execution")
+        _LOGGER.info(f"Finished execution")
 
     async def invoke_docker(self, respond, container, volume, command, path):
         import html, traceback, subprocess
         _LOGGER.info(f"<p>Using the <code>{container}</code> container to run <code>{path}</code></p>")
 
         try:
-            await respond(f"<p>Using the <code>{container}</code> container.</p>")
             # This requires you to have "working" volume you can mount
             process = subprocess.run(
                 ['docker', 'run', '--rm', '-v', volume, container] + command + [path],
@@ -111,10 +110,14 @@ class Docker(Skill):
                 if (process.stderr):
                     await respond("<b>ERROR:</b><br/><pre>{}</pre>".format(html.escape(ANSI.sub('',process.stderr))))
                 if (process.stdout):
-                    await respond("<pre>{}</pre>".format(html.escape(ANSI.sub('',process.stdout))))
+                    result = ANSI.sub('',process.stdout)
+                    if (result):
+                        await respond("<pre>{}</pre>".format(html.escape(result)))
+                    else:
+                        await respond("Finished execution with no output")
             else:
-                 _LOGGER.info("Command exited with {}".format(process.returncode))
-                 _LOGGER.info(process.stderr)
+                await respond("{} exited with {}".format(container, process.returncode))
+                _LOGGER.info(process.stderr)
 
         except:
             await respond("An error occurred. Sorry, but there's no error logging yet.")
