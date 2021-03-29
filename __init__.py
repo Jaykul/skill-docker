@@ -103,7 +103,7 @@ class Docker(Skill):
             await respond(f"<p>Using the <code>{container}</code> container.</p>")
             # This requires you to have "working" volume you can mount
             process = subprocess.run(
-                ['docker', 'run', '-v', volume, container] + command + [path],
+                ['docker', 'run', '--rm', '-v', volume, container] + command + [path],
                 capture_output=True,
                 encoding="UTF8")
 
