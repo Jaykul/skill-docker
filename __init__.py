@@ -90,11 +90,14 @@ class Docker(Skill):
         volume, workdir = config["volume"].split(":")
         filename = "{}/{}".format(workdir, os.path.split(codefile.name)[1])
         await self.invoke_docker(message.respond, language["container"], config["volume"], language["command"], filename)
+        await message.respond(f"Finished execution")
 
     async def invoke_docker(self, respond, container, volume, command, path):
         import html, traceback, subprocess
+        print(f"<p>Using the <code>{container}</code> container to run <code>{path}</code></p>")
 
         try:
+            await respond(f"<p>Using the <code>{container}</code> container to run <code>{path}</code></p>")
             # This requires you to have "working" volume you can mount
             process = subprocess.run(
                 ['docker', 'run', '-v', volume, container] + command + [path],
