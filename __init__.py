@@ -3,8 +3,10 @@ from opsdroid.matchers import match_regex
 
 from voluptuous import Required, All, Length, Range
 from tempfile import TemporaryDirectory, NamedTemporaryFile
-import asyncio, re, os
+import asyncio, re, os, logging
 
+
+_LOGGER = logging.getLogger(__name__)
 ANSI = re.compile('(\x9B|\x1B\[)[0-?]*[ -\/]*[@-~]')
 CONFIG_SCHEMA = {
     Required("volume"): All(str, Length(min=1)),
@@ -94,7 +96,7 @@ class Docker(Skill):
 
     async def invoke_docker(self, respond, container, volume, command, path):
         import html, traceback, subprocess
-        print(f"<p>Using the <code>{container}</code> container to run <code>{path}</code></p>")
+        _LOGGER.info(f"<p>Using the <code>{container}</code> container to run <code>{path}</code></p>")
 
         try:
             await respond(f"<p>Using the <code>{container}</code> container to run <code>{path}</code></p>")
@@ -110,9 +112,9 @@ class Docker(Skill):
                 if (process.stdout):
                     await respond("<pre>{}</pre>".format(html.escape(ANSI.sub('',process.stdout))))
             else:
-                print("Command exited with {}".format(process.returncode))
-                print(process.stderr)
+                 _LOGGER.info("Command exited with {}".format(process.returncode))
+                 _LOGGER.info(process.stderr)
 
         except:
             await respond("An error occurred. Sorry, but there's no error logging yet.")
-            traceback.print_exc()
+            _LOGGER.error(traceback.format_exc())
