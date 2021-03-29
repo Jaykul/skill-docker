@@ -70,7 +70,8 @@ class Docker(Skill):
 
         # This requires you to have a mounted volume
         codefile = NamedTemporaryFile(mode='w+t', suffix=language["extension"], dir=config["workdir"], delete=False)
-        codefile.writelines("$ProgressPreference='SilentlyContinue'\n")
+        if (language["extension"] == '.ps1'):
+            codefile.writelines("$ProgressPreference='SilentlyContinue'\n")
         codefile.writelines(code)
         codefile.close()
         volume, workdir = config["volume"].split(":")
@@ -99,7 +100,7 @@ class Docker(Skill):
         _LOGGER.info(f"<p>Using the <code>{container}</code> container to run <code>{path}</code></p>")
 
         try:
-            await respond(f"<p>Using the <code>{container}</code> container to run <code>{path}</code></p>")
+            await respond(f"<p>Using the <code>{container}</code> container.</p>")
             # This requires you to have "working" volume you can mount
             process = subprocess.run(
                 ['docker', 'run', '-v', volume, container] + command + [path],
